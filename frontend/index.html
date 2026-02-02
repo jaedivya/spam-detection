@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spam Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url("https://storage.googleapis.com/kaggle-datasets-images/3059849/5258192/a0bb33b17a1df9d576735341a9af24ef/dataset-card.jpeg") no-repeat center center/cover;
+      background-size: cover;
+    }
+
+    .card {
+      width: 480px;
+      padding: 35px;
+      background: rgb(245, 241, 241);
+      border-radius: 20px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+      text-align: center;
+      color: #0e66e1;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(25px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card h2 {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.22);
+      color: #111010;
+      padding: 14px;
+      font-size: 15px;
+      resize: none;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.15);
+    }
+
+    textarea::placeholder {
+      color: rgba(195, 26, 26, 0.7);
+    }
+
+    .btn {
+      margin-top: 18px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 5px 25px rgba(0, 128, 255, 0.35);
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 128, 255, 0.45);
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .badge {
+      padding: 8px 16px;
+      border-radius: 30px;
+      display: inline-block;
+      font-size: 15px;
+      margin-top: 10px;
+      animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .success { background: #10b981; color: #ffffff; box-shadow: 0 0 12px #10b981; }
+    .danger  { background: #ef4444;  color: #fff; box-shadow: 0 0 12px #ef4444; }
+
+    .confidence {
+      display: block;
+      margin-top: 6px;
+      font-size: 14px;
+      color: #151414;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h2>Spam Detection</h2>
+    <textarea id="message" placeholder="Enter your message..."></textarea>
+    <button class="btn" onclick="checkSpam()">Check 💌</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function checkSpam() {
+      const msg = document.getElementById("message").value;
+      const result = document.getElementById("result");
+
+      if (!msg.trim()) {
+        result.innerHTML = "<span class='badge danger'>Please enter a message.</span>";
+        return;
+      }
+
+      result.innerHTML = "<span class='badge' style='background:#3b82f6;'>Checking…</span>";
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          result.innerHTML = `<span class='badge danger'>Error: ${data.error}</span>`;
+        } else {
+          const pred = data.prediction.toLowerCase();
+          const conf = (data.confidence * 100).toFixed(2);
+
+          if (pred.includes("spam")) {
+            result.innerHTML = `
+              <span class="badge danger">Spam 🚨</span>
+              <span class="confidence">Confidence: ${conf}%</span>`;
+          } else {
+            result.innerHTML = `
+              <span class="badge success">Not Spam ✔️</span>
+              <span class="confidence">Confidence: ${conf}%</span>`;
+          }
+        }
+      } catch (err) {
+        result.innerHTML = `<span class='badge danger'>Request failed</span>`;
+        console.error(err);
+      }
+    }
+  </script>
+
+</body>
+</html>
